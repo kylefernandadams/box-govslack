@@ -73,9 +73,15 @@ receiver.router.post('/box/webhook', (req, res) => {
     // You're working with an express req and res now.
     console.log('Create - Found webhook payload: ', JSON.stringify(req.body));
 
+    const body = req.body;
+    const webhookRes = boxClient.webhooks.create(
+      body.target.id,
+      body.target.type,
+      body.address,
+      body.triggers
+    )
 
-    // boxClient.webhooks.create()
-
+    console.log('Found webhook creation response: ', webhookRes);
 
     const response = { test: 'this is a test'};
     res.setHeader('Content-Type', 'application/json');

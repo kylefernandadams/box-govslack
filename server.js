@@ -83,7 +83,7 @@ receiver.router.post('/box/webhook', (req, res) => {
 });
 
 (async () => {
-    await app.start(3000);
+    await app.start(process.env.PORT || 8080);
     console.log('⚡️ Slack Bolt App is running!');
   })();
   

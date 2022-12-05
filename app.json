@@ -1,0 +1,38 @@
+{
+    "name": "box-govslack",
+    "description": "",
+    "repository": "https://github.com/kylefernandadams/box-govslack.git",
+    "logo": "https://github.com/kylefernandadams/box-govslack/raw/main/box.png",
+    "keywords": [
+      "box",
+      "slack",
+      "salesforce"
+    ],
+    "website": "https://developer.box.com/",
+    "env": {
+      "BOX_CLIENT_ID": {
+        "description": "Add the Box Client ID",
+        "value": ""
+      },
+      "BOX_CLIENT_SECRET": {
+        "description": "Add the Box Client Secret",
+        "value": ""
+      },
+      "BOX_SUBJECT_TYPE": {
+        "description": "Add the Box Subject Type (user or enterprise)",
+        "value": ""
+      },
+      "BOX_SUBJECT_ID": {
+        "description": "Add the Box Subject ID",
+        "value": ""
+      },
+      "SLACK_BOT_TOKEN": {
+        "description": "Add the Bot Token for your custom Slack App",
+        "value": ""
+      },
+      "SLACK_SIGNING_SECRET": {
+        "description": "Add the Slack Signing Secret for you custom Slack App",
+        "value": ""
+      }
+    }
+  }

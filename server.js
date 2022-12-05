@@ -3,6 +3,8 @@ const BoxSDK = require('box-node-sdk');
 const winston = require('winston');
 const expressWinston = require('express-winston');
 const bodyParser = require('body-parser');
+const jsforce = require('jsforce');
+
 
 // Create an ExpressReceiver
 const receiver = new ExpressReceiver({ signingSecret: process.env.SLACK_SIGNING_SECRET });
@@ -57,24 +59,50 @@ receiver.router.use(expressWinston.logger({
     boxClient = sdk.getCCGClientForUser(process.env.BOX_SUBJECT_ID);
 }
 
+const { SFDC_LOGIN_URL, SFDC_USERNAME, SFDC_PASSWORD } = process.env;
+
+const connection = new jsforce.Connection({
+  loginUrl: SFDC_LOGIN_URL
+});
 
 
 // Receives webhook request from Box
-receiver.router.post('/box/webhook/receiver', (req, res) => {
+receiver.router.post('/box/webhook/receiver', async (req, res) => {
     // You're working with an express req and res now.
     console.log('Receiver - Found webhook payload: ', JSON.stringify(req.body));
+
+    const body = req.body;
+    const trigger = body.trigger;
+    console.log('Found trigger: ', trigger);
+    switch(trigger) {
+      case 'FILE.UPLOADED':
+        //Set Submission status mdt and sfdc field
+        break;
+      case 'FILE.PREVIEWED':
+        //Set Submission status mdt and sfdc field
+
+    }
+    const userInfo = await connection.login(SFDC_USERNAME, SFDC_PASSWORD)
+    console.log('Access token: ', connection.accessToken);
+    console.log('Instance url: ', connection.instanceUrl);
+    console.log('User id: ', userInfo.id);
+    console.log('Org Id: ', userInfo.organizationId);
+
+    // const record =  connection.sobject(sobject).retrieve(recordId);
+    // console.log('Found record: ', record);
+
     const response = { test: 'this is a test'};
     res.setHeader('Content-Type', 'application/json');
     res.status(200).send(response);
 });
 
 // Creates webhook
-receiver.router.post('/box/webhook', (req, res) => {
+receiver.router.post('/box/webhook', async (req, res) => {
     // You're working with an express req and res now.
     console.log('Create - Found webhook payload: ', JSON.stringify(req.body));
 
     const body = req.body;
-    const webhookRes = boxClient.webhooks.create(
+    const webhookRes = await boxClient.webhooks.create(
       body.target.id,
       body.target.type,
       body.address,
@@ -83,9 +111,22 @@ receiver.router.post('/box/webhook', (req, res) => {
 
     console.log('Found webhook creation response: ', webhookRes);
 
+
     const response = { test: 'this is a test'};
     res.setHeader('Content-Type', 'application/json');
     res.status(200).send(response);
+});
+
+receiver.router.post('/box/metadata', async (req, res) => {
+  // You're working with an express req and res now.
+  console.log('Create - Found metadata payload: ', JSON.stringify(req.body));
+
+  const body = req.body;
+  
+
+  const response = { test: 'this is a test'};
+  res.setHeader('Content-Type', 'application/json');
+  res.status(200).send(response);
 });
 
 (async () => {

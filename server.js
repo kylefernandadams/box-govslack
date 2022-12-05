@@ -4,10 +4,6 @@ const winston = require('winston');
 const expressWinston = require('express-winston');
 const bodyParser = require('body-parser');
 
-// const SLACK_SIGNING_SECRET = '1b7a1615631a545ab8616cad67720b4b';
-// const SLACK_BOT_TOKEN = 'xoxb-60263429373-60286432893-dw9Q3ZGBIkIUX2qwy4iv3Lt8';
-
-
 // Create an ExpressReceiver
 const receiver = new ExpressReceiver({ signingSecret: process.env.SLACK_SIGNING_SECRET });
 receiver.router.use(bodyParser.urlencoded({ extended: true }));
@@ -66,7 +62,7 @@ receiver.router.use(expressWinston.logger({
 // Receives webhook request from Box
 receiver.router.post('/box/webhook/receiver', (req, res) => {
     // You're working with an express req and res now.
-    console.log('Found webhook payload: ', JSON.stringify(req.body));
+    console.log('Receiver - Found webhook payload: ', JSON.stringify(req.body));
     const response = { test: 'this is a test'};
     res.setHeader('Content-Type', 'application/json');
     res.status(200).send(response);
@@ -75,7 +71,7 @@ receiver.router.post('/box/webhook/receiver', (req, res) => {
 // Creates webhook
 receiver.router.post('/box/webhook', (req, res) => {
     // You're working with an express req and res now.
-    console.log('Found webhook payload: ', JSON.stringify(req.body));
+    console.log('Create - Found webhook payload: ', JSON.stringify(req.body));
 
 
     // boxClient.webhooks.create()

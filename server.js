@@ -131,7 +131,7 @@ receiver.router.post('/box/webhook/receiver', async (req, res) => {
         console.log('Task assignment res: ', taskAssignRes); 
         break;
       case 'TASK_ASSIGNMENT.CREATED':
-        console.log('Found task assignment source item id: ', source.item.id);
+        console.log('Found task assignment source item id:  ', fileId);
         //Set Submission status mdt and sfdc field
         
         metadataRes = await boxClient.files.setMetadata(fileId,boxClient.metadata.scopes.ENTERPRISE,'documentApproval',
@@ -143,7 +143,7 @@ receiver.router.post('/box/webhook/receiver', async (req, res) => {
 
         break;
       case 'TASK_ASSIGNMENT.UPDATED':
-                console.log('Found task assignment source item id: ', source.item.id);
+                console.log('Found task assignment source item id: ', fileId);
 
         console.log('Found task udpated: ', body);
         metadataRes = await boxClient.files.setMetadata(fileId,boxClient.metadata.scopes.ENTERPRISE,'documentApproval',

@@ -109,7 +109,11 @@ receiver.router.post('/box/webhook/receiver', async (req, res) => {
             salesforceRecordId: recordId
           });
         console.log('SFDC MDT res: ', metadataRes);
-
+        
+        const taskRes = await boxClient.tasks.create(fileId, { message: 'Please review and approve the supporting documentation!'});
+        console.log('Task creation response: ', taskRes);
+        const taskAssignRes = await boxClient.tasks.assignByEmail(taskRes.id, 'kadams+govslack@boxdemo.com');
+        console.log('Task assignment res: ', taskAssignRes); 
         break;
       case 'FILE.PREVIEWED':
         //Set Submission status mdt and sfdc field
@@ -118,6 +122,8 @@ receiver.router.post('/box/webhook/receiver', async (req, res) => {
             documentStatus: 'In-Review'
           });
         console.log('MDT res: ', metadataRes);
+
+
         break;
       case 'METADATA_INSTANCE.UPDATED':
         console.log('mdt update body: ', body);

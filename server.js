@@ -79,43 +79,53 @@ receiver.router.post('/box/webhook/receiver', async (req, res) => {
     console.log('Found File Id: ', fileId);
     console.log('Found Parent Folder Id: ', parentFolderId);
 
-    switch(trigger) {
-      case 'FILE.UPLOADED':
-        //Set Submission status mdt and sfdc field
-        const docStatusRes = await boxClient.files.setMetadata(
-          fileId,
-          boxClient.metadata.scopes.ENTERPRISE,
-          'documentApproval',
-          {
-            documentStatus: 'In-Review'
-          });
-        console.log('MDT res: ', docStatusRes);
-
-        break;
-      case 'FILE.PREVIEWED':
-        //Set Submission status mdt and sfdc field
-
-    }
     const userInfo = await connection.login(SFDC_USERNAME, SFDC_PASSWORD)
     console.log('Access token: ', connection.accessToken);
     console.log('Instance url: ', connection.instanceUrl);
     console.log('User id: ', userInfo.id);
     console.log('Org Id: ', userInfo.organizationId);
 
-    var results = await connection.query(`
-      SELECT box__Box_user__c,box__CollaborationID__c,box__Folder_ID__c,box__Object_Name__c,box__Record_ID__c,Id,Name 
-      FROM box__FRUP__c 
-      WHERE box__Folder_ID__c = '${parentFolderId}' LIMIT 1`);
+    switch(trigger) {
+      case 'FILE.UPLOADED':
+        //Set Submission status mdt and sfdc field
+        const metadataRes = await boxClient.files.setMetadata(fileId,boxClient.metadata.scopes.ENTERPRISE,'documentApproval',
+          {
+            documentStatus: 'New'
+          });
+        console.log('MDT res: ', metadataRes);
 
-    const records = results.records;
-    console.log('Found records: ', records);
-    console.log('Found record***: ', records[0]);
-    const recordId = records[0].box__Record_ID__c;
-    const objectType = records[0].box__Object_Name__c;
-    console.log(`Found record with id: ${recordId} and object type: ${objectType}`);
+        const results = await connection.query(`
+        SELECT box__Box_user__c,box__CollaborationID__c,box__Folder_ID__c,box__Object_Name__c,box__Record_ID__c,Id,Name 
+        FROM box__FRUP__c 
+        WHERE box__Folder_ID__c = '${parentFolderId}' LIMIT 1`);
 
-    // const record =  connection.sobject(sobject).retrieve(recordId);
-    // console.log('Found record: ', record);
+        const records = results.records;
+        const recordId = records[0].box__Record_ID__c;
+        const objectType = records[0].box__Object_Name__c;
+        console.log(`Found record with id: ${recordId} and object type: ${objectType}`);
+
+        metadataRes = await boxClient.files.setMetadata(fileId,boxClient.metadata.scopes.ENTERPRISE,'salesforceMapping',
+          {
+            salesforceRecordId: recordId
+          });
+        console.log('MDT res: ', metadataRes);
+
+        break;
+      case 'FILE.PREVIEWED':
+        //Set Submission status mdt and sfdc field
+        metadataRes = await boxClient.files.setMetadata(fileId,boxClient.metadata.scopes.ENTERPRISE,'documentApproval',
+          {
+            documentStatus: 'In-Review'
+          });
+        console.log('MDT res: ', metadataRes);
+        break;
+      case 'METADATA_INSTANCE.UPDATED':
+        console.log('mdt update body: ', body);
+        break;
+      default:
+        console.log('No matching event trigger for: ', trigger);
+    }
+    
 
     const response = { test: 'this is a test'};
     res.setHeader('Content-Type', 'application/json');

@@ -116,7 +116,7 @@ receiver.router.post('/box/webhook/receiver', async (req, res) => {
         const taskAssignRes = await boxClient.tasks.assignByEmail(taskRes.id, 'kadams+govslack@boxdemo.com');
         console.log('Task assignment res: ', taskAssignRes); 
         break;
-      case 'FILE.PREVIEWED':
+      case 'TASK_ASSIGNMENT.CREATED':
         //Set Submission status mdt and sfdc field
         metadataRes = await boxClient.files.setMetadata(fileId,boxClient.metadata.scopes.ENTERPRISE,'documentApproval',
           {

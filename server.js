@@ -73,9 +73,7 @@ receiver.router.post('/box/webhook/receiver', async (req, res) => {
 
     const body = req.body;
     const trigger = body.trigger;
-    const fileId = body.source.id;
     console.log('Found trigger: ', trigger);
-    console.log('Found File Id: ', fileId);
     const sourceType = body.source.type;
     console.log('Found source type: ', sourceType);
 
@@ -85,22 +83,31 @@ receiver.router.post('/box/webhook/receiver', async (req, res) => {
     console.log('User id: ', userInfo.id);
     console.log('Org Id: ', userInfo.organizationId);
 
-    let recordId;
-    let objectType;
+    let fileId
+    let parentFolderId;
     if(sourceType === 'file') {
       console.log('Found parent: ', body.source.parent);
-      const parentFolderId = body.source.parent.id;
-      console.log('Found Parent Folder Id: ', parentFolderId);
-      const results = await connection.query(`
-          SELECT box__Box_user__c,box__CollaborationID__c,box__Folder_ID__c,box__Object_Name__c,box__Record_ID__c,Id,Name 
-          FROM box__FRUP__c 
-          WHERE box__Folder_ID__c = '${parentFolderId}' LIMIT 1`);
-
-      const records = results.records;
-      recordId = records[0].box__Record_ID__c;
-      objectType = records[0].box__Object_Name__c;
-      console.log(`Found record with id: ${recordId} and object type: ${objectType}`);
+      
+      parentFolderId = body.source.parent.id;
+      fileId = body.source.id;
     }
+    else if(sourceType === 'task_assignment') {
+      fileId = body.source.item.id;
+      fileInfoRes = await boxClient.files.get(fileId, { fields: 'parent'});
+      console.log('Found file info: ', fileInfoRes);
+      parentFolderId = fileInfoRes.parent.id;
+    }
+    console.log('Found File Id: ', fileId);
+    console.log('Found Parent Folder Id: ', parentFolderId);
+    const results = await connection.query(`
+        SELECT box__Box_user__c,box__CollaborationID__c,box__Folder_ID__c,box__Object_Name__c,box__Record_ID__c,Id,Name 
+        FROM box__FRUP__c 
+        WHERE box__Folder_ID__c = '${parentFolderId}' LIMIT 1`);
+
+    const records = results.records;
+    const recordId = records[0].box__Record_ID__c;
+    const objectType = records[0].box__Object_Name__c;
+    console.log(`Found record with id: ${recordId} and object type: ${objectType}`);
 
     let metadataRes;
     switch(trigger) {
@@ -124,8 +131,9 @@ receiver.router.post('/box/webhook/receiver', async (req, res) => {
         console.log('Task assignment res: ', taskAssignRes); 
         break;
       case 'TASK_ASSIGNMENT.CREATED':
-        console.log('Found task assignment: ', body);
+        console.log('Found task assignment source item id: ', source.item.id);
         //Set Submission status mdt and sfdc field
+        
         metadataRes = await boxClient.files.setMetadata(fileId,boxClient.metadata.scopes.ENTERPRISE,'documentApproval',
           {
             documentStatus: 'In-Review'
@@ -135,6 +143,8 @@ receiver.router.post('/box/webhook/receiver', async (req, res) => {
 
         break;
       case 'TASK_ASSIGNMENT.UPDATED':
+                console.log('Found task assignment source item id: ', source.item.id);
+
         console.log('Found task udpated: ', body);
         metadataRes = await boxClient.files.setMetadata(fileId,boxClient.metadata.scopes.ENTERPRISE,'documentApproval',
           {

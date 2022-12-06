@@ -102,7 +102,7 @@ receiver.router.post('/box/webhook/receiver', async (req, res) => {
     console.log('User id: ', userInfo.id);
     console.log('Org Id: ', userInfo.organizationId);
 
-    var records = await conn.query(`
+    var records = await connection.query(`
       SELECT box__Box_user__c,box__CollaborationID__c,box__Folder_ID__c,box__Object_Name__c,box__Record_ID__c,Id,Name 
       FROM box__FRUP__c 
       WHERE box__Folder_ID__c = '${parentFolderId}' LIMIT 1`);

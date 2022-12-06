@@ -102,12 +102,17 @@ receiver.router.post('/box/webhook/receiver', async (req, res) => {
     console.log('User id: ', userInfo.id);
     console.log('Org Id: ', userInfo.organizationId);
 
-    var records = await connection.query(`
+    var results = await connection.query(`
       SELECT box__Box_user__c,box__CollaborationID__c,box__Folder_ID__c,box__Object_Name__c,box__Record_ID__c,Id,Name 
       FROM box__FRUP__c 
       WHERE box__Folder_ID__c = '${parentFolderId}' LIMIT 1`);
 
+    const records = results.records;
     console.log('Found records: ', records);
+    console.log('Found record***: ', records[0]);
+    const recordId = records[0].box__Record_ID__c;
+    const objectType = records[0].box__Object_Name__c;
+    console.log(`Found record with id: ${recordId} and object type: ${objectType}`);
 
     // const record =  connection.sobject(sobject).retrieve(recordId);
     // console.log('Found record: ', record);

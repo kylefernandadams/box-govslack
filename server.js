@@ -74,10 +74,10 @@ receiver.router.post('/box/webhook/receiver', async (req, res) => {
     const body = req.body;
     const trigger = body.trigger;
     const fileId = body.source.id;
-    const parentFolderId = body.source.parent.id;
     console.log('Found trigger: ', trigger);
     console.log('Found File Id: ', fileId);
-    console.log('Found Parent Folder Id: ', parentFolderId);
+    const sourceType = body.source.type;
+    console.log('Found source type: ', sourceType);
 
     const userInfo = await connection.login(SFDC_USERNAME, SFDC_PASSWORD)
     console.log('Access token: ', connection.accessToken);
@@ -85,15 +85,21 @@ receiver.router.post('/box/webhook/receiver', async (req, res) => {
     console.log('User id: ', userInfo.id);
     console.log('Org Id: ', userInfo.organizationId);
 
-    const results = await connection.query(`
-        SELECT box__Box_user__c,box__CollaborationID__c,box__Folder_ID__c,box__Object_Name__c,box__Record_ID__c,Id,Name 
-        FROM box__FRUP__c 
-        WHERE box__Folder_ID__c = '${parentFolderId}' LIMIT 1`);
+    let recordId;
+    let objectType;
+    if(sourceType === 'file ') {
+      const parentFolderId = body.source.parent.id;
+      console.log('Found Parent Folder Id: ', parentFolderId);
+      const results = await connection.query(`
+          SELECT box__Box_user__c,box__CollaborationID__c,box__Folder_ID__c,box__Object_Name__c,box__Record_ID__c,Id,Name 
+          FROM box__FRUP__c 
+          WHERE box__Folder_ID__c = '${parentFolderId}' LIMIT 1`);
 
-    const records = results.records;
-    const recordId = records[0].box__Record_ID__c;
-    const objectType = records[0].box__Object_Name__c;
-    console.log(`Found record with id: ${recordId} and object type: ${objectType}`);
+      const records = results.records;
+      recordId = records[0].box__Record_ID__c;
+      objectType = records[0].box__Object_Name__c;
+      console.log(`Found record with id: ${recordId} and object type: ${objectType}`);
+    }
 
     let metadataRes;
     switch(trigger) {

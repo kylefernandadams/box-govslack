@@ -162,7 +162,7 @@ receiver.router.post('/box/webhook/receiver', async (req, res) => {
             console.log('Update record with res: ', updateRes);
             break;
           default:
-            ''
+            console.log('Not matching document status: ', documentStatus);
         
         }
         break;

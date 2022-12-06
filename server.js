@@ -84,7 +84,7 @@ receiver.router.post('/box/webhook/receiver', async (req, res) => {
         //Set Submission status mdt and sfdc field
         const docStatusRes = await boxClient.files.setMetadata(
           fileId,
-          client.metadata.scopes.ENTERPRISE,
+          boxClient.metadata.scopes.ENTERPRISE,
           'documentApproval',
           {
             documentStatus: 'In-Review'

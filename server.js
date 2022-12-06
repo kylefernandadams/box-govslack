@@ -87,7 +87,8 @@ receiver.router.post('/box/webhook/receiver', async (req, res) => {
 
     let recordId;
     let objectType;
-    if(sourceType === 'file ') {
+    if(sourceType === 'file') {
+      console.log('Found parent: ', body.source.parent);
       const parentFolderId = body.source.parent.id;
       console.log('Found Parent Folder Id: ', parentFolderId);
       const results = await connection.query(`

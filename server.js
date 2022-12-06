@@ -84,6 +84,17 @@ receiver.router.post('/box/webhook/receiver', async (req, res) => {
     console.log('Instance url: ', connection.instanceUrl);
     console.log('User id: ', userInfo.id);
     console.log('Org Id: ', userInfo.organizationId);
+
+    const results = await connection.query(`
+        SELECT box__Box_user__c,box__CollaborationID__c,box__Folder_ID__c,box__Object_Name__c,box__Record_ID__c,Id,Name 
+        FROM box__FRUP__c 
+        WHERE box__Folder_ID__c = '${parentFolderId}' LIMIT 1`);
+
+    const records = results.records;
+    const recordId = records[0].box__Record_ID__c;
+    const objectType = records[0].box__Object_Name__c;
+    console.log(`Found record with id: ${recordId} and object type: ${objectType}`);
+
     let metadataRes;
     switch(trigger) {
       case 'FILE.UPLOADED':
@@ -93,16 +104,6 @@ receiver.router.post('/box/webhook/receiver', async (req, res) => {
             documentStatus: 'New'
           });
         console.log('Doc Status MDT res: ', metadataRes);
-
-        const results = await connection.query(`
-        SELECT box__Box_user__c,box__CollaborationID__c,box__Folder_ID__c,box__Object_Name__c,box__Record_ID__c,Id,Name 
-        FROM box__FRUP__c 
-        WHERE box__Folder_ID__c = '${parentFolderId}' LIMIT 1`);
-
-        const records = results.records;
-        const recordId = records[0].box__Record_ID__c;
-        const objectType = records[0].box__Object_Name__c;
-        console.log(`Found record with id: ${recordId} and object type: ${objectType}`);
 
         metadataRes = await boxClient.files.setMetadata(fileId,boxClient.metadata.scopes.ENTERPRISE,'salesforceMapping',
           {
@@ -125,8 +126,45 @@ receiver.router.post('/box/webhook/receiver', async (req, res) => {
 
 
         break;
+      case 'TASK_ASSIGNMENT.UPDATED':
+        console.log('Task updated: ', body);
+        metadataRes = await boxClient.files.setMetadata(fileId,boxClient.metadata.scopes.ENTERPRISE,'documentApproval',
+          {
+            documentStatus: 'Approved'
+          });
+        console.log('MDT res: ', metadataRes);
+        break;
       case 'METADATA_INSTANCE.UPDATED':
-        console.log('mdt update body: ', body);
+        const metadata = await boxClient.files.getMetadata(fileId, boxClient.metadata.scopes.ENTERPRISE, 'documentApproval');
+        console.log('Found metadata values: ', metadata);
+        const documentStatus = metadata.documentStatus;
+        let updateRes;
+        switch(documentStatus) {
+          case 'New':
+            updateRes = await connection.sobject(objectType).update({ 
+              Id : recordId,
+              SubmissionStatus__c : 'IND Received'
+            });
+            console.log('Update record with res: ', updateRes);
+            break;
+          case 'In-Review':
+            updateRes = await connection.sobject(objectType).update({ 
+              Id : recordId,
+              SubmissionStatus__c : 'IND In-Review'
+            });
+            console.log('Update record with res: ', updateRes);
+            break;
+          case 'Approved':
+            updateRes = await connection.sobject(objectType).update({ 
+              Id : recordId,
+              SubmissionStatus__c : 'IND Approved'
+            });
+            console.log('Update record with res: ', updateRes);
+            break;
+          default:
+            ''
+        
+        }
         break;
       default:
         console.log('No matching event trigger for: ', trigger);
@@ -162,7 +200,7 @@ receiver.router.post('/box/webhook', async (req, res) => {
 receiver.router.post('/box/metadata', async (req, res) => {
   // You're working with an express req and res now.
   console.log('Create - Found metadata payload: ', JSON.stringify(req.body));
-
+  
   const body = req.body;
   
 

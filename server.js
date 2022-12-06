@@ -84,15 +84,15 @@ receiver.router.post('/box/webhook/receiver', async (req, res) => {
     console.log('Instance url: ', connection.instanceUrl);
     console.log('User id: ', userInfo.id);
     console.log('Org Id: ', userInfo.organizationId);
-
+    let metadataRes;
     switch(trigger) {
       case 'FILE.UPLOADED':
         //Set Submission status mdt and sfdc field
-        const metadataRes = await boxClient.files.setMetadata(fileId,boxClient.metadata.scopes.ENTERPRISE,'documentApproval',
+        metadataRes = await boxClient.files.setMetadata(fileId,boxClient.metadata.scopes.ENTERPRISE,'documentApproval',
           {
             documentStatus: 'New'
           });
-        console.log('MDT res: ', metadataRes);
+        console.log('Doc Status MDT res: ', metadataRes);
 
         const results = await connection.query(`
         SELECT box__Box_user__c,box__CollaborationID__c,box__Folder_ID__c,box__Object_Name__c,box__Record_ID__c,Id,Name 
@@ -108,7 +108,7 @@ receiver.router.post('/box/webhook/receiver', async (req, res) => {
           {
             salesforceRecordId: recordId
           });
-        console.log('MDT res: ', metadataRes);
+        console.log('SFDC MDT res: ', metadataRes);
 
         break;
       case 'FILE.PREVIEWED':

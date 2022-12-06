@@ -69,14 +69,28 @@ const connection = new jsforce.Connection({
 // Receives webhook request from Box
 receiver.router.post('/box/webhook/receiver', async (req, res) => {
     // You're working with an express req and res now.
-    console.log('Receiver - Found webhook payload: ', JSON.stringify(req.body));
+    // console.log('Receiver - Found webhook payload: ', JSON.stringify(req.body));
 
     const body = req.body;
     const trigger = body.trigger;
+    const fileId = body.source.id;
+    const parentFolderId = body.source.parent.id;
     console.log('Found trigger: ', trigger);
+    console.log('Found File Id: ', fileId);
+    console.log('Found Parent Folder Id: ', parentFolderId);
+
     switch(trigger) {
       case 'FILE.UPLOADED':
         //Set Submission status mdt and sfdc field
+        const docStatusRes = await boxClient.files.setMetadata(
+          fileId,
+          client.metadata.scopes.ENTERPRISE,
+          'documentApproval',
+          {
+            documentStatus: 'In-Review'
+          });
+        console.log('MDT res: ', docStatusRes);
+
         break;
       case 'FILE.PREVIEWED':
         //Set Submission status mdt and sfdc field
@@ -87,6 +101,13 @@ receiver.router.post('/box/webhook/receiver', async (req, res) => {
     console.log('Instance url: ', connection.instanceUrl);
     console.log('User id: ', userInfo.id);
     console.log('Org Id: ', userInfo.organizationId);
+
+    var records = await conn.query(`
+      SELECT box__Box_user__c,box__CollaborationID__c,box__Folder_ID__c,box__Object_Name__c,box__Record_ID__c,Id,Name 
+      FROM box__FRUP__c 
+      WHERE box__Folder_ID__c = '${parentFolderId}' LIMIT 1`);
+
+    console.log('Found records: ', records);
 
     // const record =  connection.sobject(sobject).retrieve(recordId);
     // console.log('Found record: ', record);
